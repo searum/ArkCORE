@@ -1,21 +1,25 @@
 /*
- * Copyright (C) 2008 - 2012 TrinityCore <http://www.trinitycore.org/>
- * Copyright (C) 2006-2009 ScriptDev2 <https://scriptdev2.svn.sourceforge.net/>
- * 
- * Copyright (C) 2011 - 2012 ArkCORE <http://www.arkania.net/>
+ * Copyright (C) 2005-2011 MaNGOS <http://www.getmangos.com/>
  *
- * This program is free software; you can redistribute it and/or modify it
- * under the terms of the GNU General Public License as published by the
- * Free Software Foundation; either version 2 of the License, or (at your
- * option) any later version.
+ * Copyright (C) 2008-2011 Trinity <http://www.trinitycore.org/>
  *
- * This program is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
- * FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for
- * more details.
+ * Copyright (C) 2006-2011 ScriptDev2 <http://www.scriptdev2.com/>
  *
- * You should have received a copy of the GNU General Public License along
- * with this program. If not, see <http://www.gnu.org/licenses/>.
+ * Copyright (C) 2010-2011 Project SkyFire <http://www.projectskyfire.org/>
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
 
 /* ScriptData
@@ -65,27 +69,27 @@ class boss_loken : public CreatureScript
 public:
     boss_loken() : CreatureScript("boss_loken") { }
 
-    CreatureAI* GetAI(Creature* creature) const
+    CreatureAI* GetAI(Creature* pCreature) const
     {
-        return new boss_lokenAI(creature);
+        return new boss_lokenAI(pCreature);
     }
 
     struct boss_lokenAI : public ScriptedAI
     {
-        boss_lokenAI(Creature* creature) : ScriptedAI(creature)
+        boss_lokenAI(Creature* pCreature) : ScriptedAI(pCreature)
         {
-            m_pInstance = creature->GetInstanceScript();
+            m_pInstance = pCreature->GetInstanceScript();
         }
 
         InstanceScript* m_pInstance;
 
         bool m_bIsAura;
-        bool bHit;
 
         uint32 m_uiArcLightning_Timer;
         uint32 m_uiLightningNova_Timer;
         uint32 m_uiPulsingShockwave_Timer;
         uint32 m_uiResumePulsingShockwave_Timer;
+
         uint32 m_uiHealthAmountModifier;
 
         void Reset()
@@ -106,18 +110,7 @@ public:
             }
         }
 
-        void SpellHitTarget(Unit * target, const SpellEntry * spell)
-        {
-            if (spell->Id==SPELL_ARC_LIGHTNING && bHit)
-                if (rand()%100<DUNGEON_MODE(65,80))
-                {
-                    bHit=false;
-                    DoCast(target->GetNextRandomRaidMemberOrPet(10.0f),SPELL_ARC_LIGHTNING);
-                }
-        }
-
-
-        void EnterCombat(Unit* /*who*/)
+        void EnterCombat(Unit* /*pWho*/)
         {
             DoScriptText(SAY_AGGRO, me);
 
@@ -126,25 +119,9 @@ public:
                 m_pInstance->SetData(TYPE_LOKEN, IN_PROGRESS);
                 m_pInstance->DoStartTimedAchievement(ACHIEVEMENT_TIMED_TYPE_EVENT, ACHIEV_TIMELY_DEATH_START_EVENT);
             }
-
-            if (m_pInstance->GetData(TYPE_IONAR)!=DONE)
-            {
-                Map* pMap = me->GetMap();
-                if (pMap->IsDungeon())
-                {
-                    Map::PlayerList const &PlayerList = pMap->GetPlayers();
-                    if (PlayerList.isEmpty())
-                        return;
-
-                    float fDist=0;
-                    for (Map::PlayerList::const_iterator i = PlayerList.begin(); i != PlayerList.end(); ++i)
-                        if (i->getSource() && i->getSource()->isAlive() && !i->getSource()->isGameMaster())
-                            me->DealDamage(i->getSource(),i->getSource()->GetMaxHealth(), NULL, DIRECT_DAMAGE, SPELL_SCHOOL_MASK_NORMAL, NULL, false);
-                }
-            }
         }
 
-        void JustDied(Unit* /*killer*/)
+        void JustDied(Unit* /*pKiller*/)
         {
             DoScriptText(SAY_DEATH, me);
 
@@ -152,7 +129,7 @@ public:
                 m_pInstance->SetData(TYPE_LOKEN, DONE);
         }
 
-        void KilledUnit(Unit* /*victim*/)
+        void KilledUnit(Unit* /*pVictim*/)
         {
             DoScriptText(RAND(SAY_SLAY_1, SAY_SLAY_2, SAY_SLAY_3), me);
         }
@@ -176,17 +153,18 @@ public:
                         if (PlayerList.isEmpty())
                             return;
 
-                        float fDist=0;
                         for (Map::PlayerList::const_iterator i = PlayerList.begin(); i != PlayerList.end(); ++i)
                             if (i->getSource() && i->getSource()->isAlive() && i->getSource()->isTargetableForAttack())
                             {
-                                float fDistTemp = me->GetExactDist(i->getSource()->GetPositionX(), i->getSource()->GetPositionY(), i->getSource()->GetPositionZ());
-                                if (fDistTemp>fDist)
-                                    fDist=fDistTemp;
+                                int32 dmg;
+                                float m_fDist = me->GetExactDist(i->getSource()->GetPositionX(), i->getSource()->GetPositionY(), i->getSource()->GetPositionZ());
+
+                                dmg = DUNGEON_MODE(100, 150); // need to correct damage
+                                if (m_fDist > 1.0f) // Further from 1 yard
+                                    dmg = int32(dmg*m_fDist);
+
+                                me->CastCustomSpell(i->getSource(), DUNGEON_MODE(52942, 59837), &dmg, 0, 0, false);
                             }
-                        int32 dmg= int32(DUNGEON_MODE(100, 150)*fDist);
-                        int32 range=200;
-                        me->CastCustomSpell(me->getVictim(), DUNGEON_MODE(52942, 59837), &dmg, &range, 0, false);
                     }
                     m_uiPulsingShockwave_Timer = 2000;
                 } else m_uiPulsingShockwave_Timer -= uiDiff;
@@ -198,7 +176,7 @@ public:
                     //breaks at movement, can we assume when it's time, this spell is casted and also must stop movement?
                     DoCast(me, SPELL_PULSING_SHOCKWAVE_AURA, true);
 
-                    DoCast(me, DUNGEON_MODE(SPELL_PULSING_SHOCKWAVE_N,SPELL_PULSING_SHOCKWAVE_H)); // need core support
+                    DoCast(me, SPELL_PULSING_SHOCKWAVE_N); // need core support
                     m_bIsAura = true;
                     m_uiResumePulsingShockwave_Timer = 0;
                 }
@@ -208,10 +186,9 @@ public:
 
             if (m_uiArcLightning_Timer <= uiDiff)
             {
-                if (Unit* target = SelectTarget(SELECT_TARGET_RANDOM, 0))
-                    DoCast(target, SPELL_ARC_LIGHTNING);
+                if (Unit* pTarget = SelectUnit(SELECT_TARGET_RANDOM, 0))
+                    DoCast(pTarget, SPELL_ARC_LIGHTNING);
 
-                bHit=true;
                 m_uiArcLightning_Timer = 15000 + rand()%1000;
             }
             else
@@ -221,7 +198,7 @@ public:
             {
                 DoScriptText(RAND(SAY_NOVA_1, SAY_NOVA_2, SAY_NOVA_3), me);
                 DoScriptText(EMOTE_NOVA, me);
-                DoCast(me, DUNGEON_MODE(SPELL_LIGHTNING_NOVA_N,SPELL_LIGHTNING_NOVA_H));
+                DoCast(me, SPELL_LIGHTNING_NOVA_N);
 
                 m_bIsAura = false;
                 m_uiResumePulsingShockwave_Timer = DUNGEON_MODE(5000, 4000); // Pause Pulsing Shockwave aura
@@ -233,7 +210,7 @@ public:
             // Health check
             if (HealthBelowPct(100 - 25 * m_uiHealthAmountModifier))
             {
-                switch (m_uiHealthAmountModifier)
+                switch(m_uiHealthAmountModifier)
                 {
                     case 1: DoScriptText(SAY_75HEALTH, me); break;
                     case 2: DoScriptText(SAY_50HEALTH, me); break;
@@ -246,7 +223,6 @@ public:
             DoMeleeAttackIfReady();
         }
     };
-
 };
 
 void AddSC_boss_loken()
