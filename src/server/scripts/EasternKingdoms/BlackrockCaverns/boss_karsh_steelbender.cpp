@@ -94,7 +94,7 @@ public:
 
         void EnterCombat(Unit* /*who*/)
 		{
-			DoCast(me, SPELL_QUECKSILVER_ARMOR);
+			//DoCast(me, SPELL_QUECKSILVER_ARMOR);
 			events.ScheduleEvent(EVENT_CLEAVE, urand(15000,18000));
 			events.ScheduleEvent(EVENT_CHECK_ARMOR_STATE, 1000);
 

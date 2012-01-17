@@ -1,25 +1,19 @@
 /*
- * Copyright (C) 2005-2011 MaNGOS <http://www.getmangos.com/>
+ * Copyright (C) 2008-2012 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2006-2009 ScriptDev2 <https://scriptdev2.svn.sourceforge.net/>
  *
- * Copyright (C) 2008-2011 Trinity <http://www.trinitycore.org/>
+ * This program is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License as published by the
+ * Free Software Foundation; either version 2 of the License, or (at your
+ * option) any later version.
  *
- * Copyright (C) 2006-2011 ScriptDev2 <http://www.scriptdev2.com/>
+ * This program is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+ * FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for
+ * more details.
  *
- * Copyright (C) 2010-2011 Project SkyFire <http://www.projectskyfire.org/>
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
+ * You should have received a copy of the GNU General Public License along
+ * with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
 /* ScriptData
@@ -44,14 +38,14 @@ class instance_halls_of_lightning : public InstanceMapScript
 public:
     instance_halls_of_lightning() : InstanceMapScript("instance_halls_of_lightning", 602) { }
 
-    InstanceScript* GetInstanceScript(InstanceMap* pMap) const
+    InstanceScript* GetInstanceScript(InstanceMap* map) const
     {
-        return new instance_halls_of_lightning_InstanceMapScript(pMap);
+        return new instance_halls_of_lightning_InstanceMapScript(map);
     }
 
     struct instance_halls_of_lightning_InstanceMapScript : public InstanceScript
     {
-        instance_halls_of_lightning_InstanceMapScript(Map* pMap) : InstanceScript(pMap) {Initialize();};
+        instance_halls_of_lightning_InstanceMapScript(Map* map) : InstanceScript(map) {}
 
         uint32 m_auiEncounter[MAX_ENCOUNTER];
 
@@ -82,88 +76,92 @@ public:
             m_uiLokenGlobeGUID       = 0;
         }
 
-        void OnCreatureCreate(Creature* pCreature, bool /*add*/)
+        void OnCreatureCreate(Creature* creature)
         {
-            switch(pCreature->GetEntry())
+            switch (creature->GetEntry())
             {
                 case NPC_BJARNGRIM:
-                    m_uiGeneralBjarngrimGUID = pCreature->GetGUID();
+                    m_uiGeneralBjarngrimGUID = creature->GetGUID();
                     break;
                 case NPC_VOLKHAN:
-                    m_uiVolkhanGUID = pCreature->GetGUID();
+                    m_uiVolkhanGUID = creature->GetGUID();
                     break;
                 case NPC_IONAR:
-                    m_uiIonarGUID = pCreature->GetGUID();
+                    m_uiIonarGUID = creature->GetGUID();
                     break;
                 case NPC_LOKEN:
-                    m_uiLokenGUID = pCreature->GetGUID();
+                    m_uiLokenGUID = creature->GetGUID();
                     break;
             }
         }
 
-        void OnGameObjectCreate(GameObject* pGo, bool /*add*/)
+        void OnGameObjectCreate(GameObject* go)
         {
-            switch(pGo->GetEntry())
+            switch (go->GetEntry())
             {
                 case GO_BJARNGRIM_DOOR:
-                    m_uiBjarngrimDoorGUID = pGo->GetGUID();
+                    m_uiBjarngrimDoorGUID = go->GetGUID();
                     if (m_auiEncounter[0] == DONE)
-                        pGo->SetGoState(GO_STATE_ACTIVE);
+                        go->SetGoState(GO_STATE_ACTIVE);
                     else
-                        pGo->SetGoState(GO_STATE_READY);
+                        go->SetGoState(GO_STATE_READY);
                     break;
                 case GO_VOLKHAN_DOOR:
-                    m_uiVolkhanDoorGUID = pGo->GetGUID();
+                    m_uiVolkhanDoorGUID = go->GetGUID();
                     if (m_auiEncounter[1] == DONE)
-                        pGo->SetGoState(GO_STATE_ACTIVE);
+                        go->SetGoState(GO_STATE_ACTIVE);
                     else
-                        pGo->SetGoState(GO_STATE_READY);
+                        go->SetGoState(GO_STATE_READY);
                     break;
                 case GO_IONAR_DOOR:
-                    m_uiIonarDoorGUID = pGo->GetGUID();
+                    m_uiIonarDoorGUID = go->GetGUID();
                     if (m_auiEncounter[2] == DONE)
-                        pGo->SetGoState(GO_STATE_ACTIVE);
+                        go->SetGoState(GO_STATE_ACTIVE);
                     else
-                        pGo->SetGoState(GO_STATE_READY);
+                        go->SetGoState(GO_STATE_READY);
                     break;
                 case GO_LOKEN_DOOR:
-                    m_uiLokenDoorGUID = pGo->GetGUID();
+                    m_uiLokenDoorGUID = go->GetGUID();
                     if (m_auiEncounter[3] == DONE)
-                        pGo->SetGoState(GO_STATE_ACTIVE);
+                        go->SetGoState(GO_STATE_ACTIVE);
                     else
-                        pGo->SetGoState(GO_STATE_READY);
+                        go->SetGoState(GO_STATE_READY);
                     break;
                 case GO_LOKEN_THRONE:
-                    m_uiLokenGlobeGUID = pGo->GetGUID();
+                    m_uiLokenGlobeGUID = go->GetGUID();
                     break;
             }
         }
 
         void SetData(uint32 uiType, uint32 uiData)
         {
-            switch(uiType)
+            switch (uiType)
             {
                 case TYPE_BJARNGRIM:
                     if (uiData == DONE)
-                        DoUseDoorOrButton(m_uiBjarngrimDoorGUID);
+                        if (GameObject* pDoor = instance->GetGameObject(m_uiBjarngrimDoorGUID))
+                            pDoor->SetGoState(GO_STATE_ACTIVE);
                     m_auiEncounter[0] = uiData;
                     break;
                 case TYPE_VOLKHAN:
                     if (uiData == DONE)
-                        DoUseDoorOrButton(m_uiVolkhanDoorGUID);
+                        if (GameObject* pDoor = instance->GetGameObject(m_uiVolkhanDoorGUID))
+                            pDoor->SetGoState(GO_STATE_ACTIVE);
                     m_auiEncounter[1] = uiData;
                     break;
                 case TYPE_IONAR:
                     if (uiData == DONE)
-                        DoUseDoorOrButton(m_uiIonarDoorGUID);
+                        if (GameObject* pDoor = instance->GetGameObject(m_uiIonarDoorGUID))
+                            pDoor->SetGoState(GO_STATE_ACTIVE);
                     m_auiEncounter[2] = uiData;
                     break;
                 case TYPE_LOKEN:
                     if (uiData == DONE)
                     {
-                        DoUseDoorOrButton(m_uiLokenDoorGUID);
+                        if (GameObject* pDoor = instance->GetGameObject(m_uiLokenDoorGUID))
+                            pDoor->SetGoState(GO_STATE_ACTIVE);
 
-                        //Appears to be type 5 GO with animation. Need to figure out how this work, code below only placeholder
+                        // Appears to be type 5 GO with animation. Need to figure out how this work, code below only placeholder
                         if (GameObject* pGlobe = instance->GetGameObject(m_uiLokenGlobeGUID))
                             pGlobe->SetGoState(GO_STATE_ACTIVE);
                     }
@@ -177,7 +175,7 @@ public:
 
         uint32 GetData(uint32 uiType)
         {
-            switch(uiType)
+            switch (uiType)
             {
                 case TYPE_BJARNGRIM:
                     return m_auiEncounter[0];
@@ -193,7 +191,7 @@ public:
 
         uint64 GetData64(uint32 uiData)
         {
-            switch(uiData)
+            switch (uiData)
             {
                 case DATA_BJARNGRIM:
                     return m_uiGeneralBjarngrimGUID;
@@ -212,8 +210,8 @@ public:
             OUT_SAVE_INST_DATA;
 
             std::ostringstream saveStream;
-            saveStream << "H L " << m_auiEncounter[0] << " " << m_auiEncounter[1] << " "
-            << m_auiEncounter[2] << " " << m_auiEncounter[3];
+            saveStream << "H L " << m_auiEncounter[0] << ' ' << m_auiEncounter[1] << ' '
+            << m_auiEncounter[2] << ' ' << m_auiEncounter[3];
 
             OUT_SAVE_INST_DATA_COMPLETE;
             return saveStream.str();
@@ -250,6 +248,7 @@ public:
             OUT_LOAD_INST_DATA_COMPLETE;
         }
     };
+
 };
 
 void AddSC_instance_halls_of_lightning()

@@ -1,25 +1,19 @@
 /*
- * Copyright (C) 2005-2011 MaNGOS <http://www.getmangos.com/>
+ * Copyright (C) 2008-2012 TrinityCore <http://www.trinitycore.org/>
+ * Copyright (C) 2006-2009 ScriptDev2 <https://scriptdev2.svn.sourceforge.net/>
  *
- * Copyright (C) 2008-2011 Trinity <http://www.trinitycore.org/>
+ * This program is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License as published by the
+ * Free Software Foundation; either version 2 of the License, or (at your
+ * option) any later version.
  *
- * Copyright (C) 2006-2011 ScriptDev2 <http://www.scriptdev2.com/>
+ * This program is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+ * FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for
+ * more details.
  *
- * Copyright (C) 2010-2011 Project SkyFire <http://www.projectskyfire.org/>
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
+ * You should have received a copy of the GNU General Public License along
+ * with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
 /* ScriptData
@@ -69,19 +63,19 @@ class boss_loken : public CreatureScript
 public:
     boss_loken() : CreatureScript("boss_loken") { }
 
-    CreatureAI* GetAI(Creature* pCreature) const
+    CreatureAI* GetAI(Creature* creature) const
     {
-        return new boss_lokenAI(pCreature);
+        return new boss_lokenAI(creature);
     }
 
     struct boss_lokenAI : public ScriptedAI
     {
-        boss_lokenAI(Creature* pCreature) : ScriptedAI(pCreature)
+        boss_lokenAI(Creature* creature) : ScriptedAI(creature)
         {
-            m_pInstance = pCreature->GetInstanceScript();
+            m_instance = creature->GetInstanceScript();
         }
 
-        InstanceScript* m_pInstance;
+        InstanceScript* m_instance;
 
         bool m_bIsAura;
 
@@ -103,33 +97,33 @@ public:
 
             m_uiHealthAmountModifier = 1;
 
-            if (m_pInstance)
+            if (m_instance)
             {
-                m_pInstance->SetData(TYPE_LOKEN, NOT_STARTED);
-                m_pInstance->DoStopTimedAchievement(ACHIEVEMENT_TIMED_TYPE_EVENT, ACHIEV_TIMELY_DEATH_START_EVENT);
+                m_instance->SetData(TYPE_LOKEN, NOT_STARTED);
+                m_instance->DoStopTimedAchievement(ACHIEVEMENT_TIMED_TYPE_EVENT, ACHIEV_TIMELY_DEATH_START_EVENT);
             }
         }
 
-        void EnterCombat(Unit* /*pWho*/)
+        void EnterCombat(Unit* /*who*/)
         {
             DoScriptText(SAY_AGGRO, me);
 
-            if (m_pInstance)
+            if (m_instance)
             {
-                m_pInstance->SetData(TYPE_LOKEN, IN_PROGRESS);
-                m_pInstance->DoStartTimedAchievement(ACHIEVEMENT_TIMED_TYPE_EVENT, ACHIEV_TIMELY_DEATH_START_EVENT);
+                m_instance->SetData(TYPE_LOKEN, IN_PROGRESS);
+                m_instance->DoStartTimedAchievement(ACHIEVEMENT_TIMED_TYPE_EVENT, ACHIEV_TIMELY_DEATH_START_EVENT);
             }
         }
 
-        void JustDied(Unit* /*pKiller*/)
+        void JustDied(Unit* /*killer*/)
         {
             DoScriptText(SAY_DEATH, me);
 
-            if (m_pInstance)
-                m_pInstance->SetData(TYPE_LOKEN, DONE);
+            if (m_instance)
+                m_instance->SetData(TYPE_LOKEN, DONE);
         }
 
-        void KilledUnit(Unit* /*pVictim*/)
+        void KilledUnit(Unit* /*victim*/)
         {
             DoScriptText(RAND(SAY_SLAY_1, SAY_SLAY_2, SAY_SLAY_3), me);
         }
@@ -145,10 +139,10 @@ public:
                 // workaround for PULSING_SHOCKWAVE
                 if (m_uiPulsingShockwave_Timer <= uiDiff)
                 {
-                    Map* pMap = me->GetMap();
-                    if (pMap->IsDungeon())
+                    Map* map = me->GetMap();
+                    if (map->IsDungeon())
                     {
-                        Map::PlayerList const &PlayerList = pMap->GetPlayers();
+                        Map::PlayerList const &PlayerList = map->GetPlayers();
 
                         if (PlayerList.isEmpty())
                             return;
@@ -186,10 +180,10 @@ public:
 
             if (m_uiArcLightning_Timer <= uiDiff)
             {
-                if (Unit* pTarget = SelectUnit(SELECT_TARGET_RANDOM, 0))
-                    DoCast(pTarget, SPELL_ARC_LIGHTNING);
+                if (Unit* target = SelectTarget(SELECT_TARGET_RANDOM, 0))
+                    DoCast(target, SPELL_ARC_LIGHTNING);
 
-                m_uiArcLightning_Timer = 15000 + rand()%1000;
+                m_uiArcLightning_Timer = urand(15000, 16000);
             }
             else
                 m_uiArcLightning_Timer -= uiDiff;
@@ -202,7 +196,7 @@ public:
 
                 m_bIsAura = false;
                 m_uiResumePulsingShockwave_Timer = DUNGEON_MODE(5000, 4000); // Pause Pulsing Shockwave aura
-                m_uiLightningNova_Timer = 20000 + rand()%1000;
+                m_uiLightningNova_Timer = urand(20000, 21000);
             }
             else
                 m_uiLightningNova_Timer -= uiDiff;
@@ -210,7 +204,7 @@ public:
             // Health check
             if (HealthBelowPct(100 - 25 * m_uiHealthAmountModifier))
             {
-                switch(m_uiHealthAmountModifier)
+                switch (m_uiHealthAmountModifier)
                 {
                     case 1: DoScriptText(SAY_75HEALTH, me); break;
                     case 2: DoScriptText(SAY_50HEALTH, me); break;
@@ -223,6 +217,7 @@ public:
             DoMeleeAttackIfReady();
         }
     };
+
 };
 
 void AddSC_boss_loken()
