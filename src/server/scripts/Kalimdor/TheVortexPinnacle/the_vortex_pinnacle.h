@@ -1,9 +1,5 @@
 /*
- * Copyright (C) 2010 - 2012 ProjectSkyfire <http://www.projectskyfire.org/>
- * 
- * Copyright (C) 2011 - 2012 ArkCORE <http://www.arkania.net/>
- * Copyright (C) 2008 - 2012 TrinityCore <http://www.trinitycore.org/>
- * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
+ * Copyright (C) 2010-2011 SkyFire <http://www.projectskyfire.org/>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -28,6 +24,9 @@ enum Data
     DATA_ALTAIRUS_EVENT,
     DATA_ASAAD_EVENT,
     DATA_TEAM_IN_INSTANCE_EVENT,
+
+	DATA_LURKING_TEMPEST_NO,
+	DATA_TWISTER_NO,
 };
 
 enum Data64
@@ -35,6 +34,15 @@ enum Data64
     DATA_GRAND_VIZIER_ERTAN,
     DATA_ALTAIRUS,
     DATA_ASAAD,
+};
+
+enum Actions
+{
+    ACTION_TEMPEST_MOVE,
+	ACTION_TEMPEST_MOVE_IN,
+	ACTION_TEMPEST_MOVE_OUT,
+	ACTION_LURKING_TEMPEST_GO_IN,
+	ACTION_LURKING_TEMPEST_GO_OUT,
 };
 
 enum CreatureIds
@@ -53,13 +61,15 @@ enum CreatureIds
     NPC_EXECUTOR_OF_THE_CALIPH  = 45928,
     NPC_GUST_SOLDIER            = 45477,
     NPC_HOWLING_GALE            = 45572,
-    NPC_LURKING_TEMPEST         = 45704,
+    NPC_LURKING_TEMPEST         = 45704, // Uses in the fight of ertan
     NPC_MINISTER_OF_AIR         = 45930,
     NPC_TEMPLE_ADEPT            = 45935,
     NPC_YOUNG_STORM_DRAGON      = 45919,
     NPC_WILD_VORTEX             = 45912,
-    NPC_SLIPSTREAM              = 45455,
     // Various NPCs
+
+	NPC_SLIPSTREAM			    = 45455,
+	NPC_TWISTER                 = 47342,
 
     NPC_GOLDEN_ORB              = 51157,  /*Heroic Mode*/
     NPC_ITESH                   = 49943,
