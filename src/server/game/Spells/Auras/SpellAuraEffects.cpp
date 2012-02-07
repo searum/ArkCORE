@@ -776,7 +776,7 @@ int32 AuraEffect::CalculateAmount(Unit *caster) {
                     if(GetBase()->GetCaster()->HasAura(33599))  // Dreamstate rank2
                         bonusMana += 30;
                 }
-                ApplyPctF(bonusMana, float(GetBase()->GetUnitOwner()->GetMaxPower(POWER_MANA)) / GetTotalTicks());
+                amount = int32(GetBase()->GetUnitOwner()->GetCreatePowers(POWER_MANA) * amount * 3 / (GetTotalTicks() * 100.0f));
             }
 		// Owlkin Frenzy
 		else if (m_spellProto->Id == 48391)
@@ -3044,7 +3044,8 @@ void AuraEffect::HandleShapeshiftBoosts(Unit *target, bool apply) const {
 					target->CastSpell(target, spellId, true, NULL, this);
 				}
 				// Master Shapeshifter - Cat
-				if (AuraEffect const * aurEff = target->GetDummyAuraEffect(SPELLFAMILY_GENERIC, 2851, 0)) {
+				if (AuraEffect const * aurEff = target->GetAuraEffect(SPELL_AURA_MOD_HEALING_DONE_PERCENT, SPELLFAMILY_GENERIC, 2851, 0))  {
+					if (target->HasAura(48418)) target->RemoveAurasDueToSpell(48418);
 					int32 bp = aurEff->GetAmount();
 					target->CastCustomSpell(target, 48420, &bp, NULL, NULL,
 							true);
@@ -3053,7 +3054,7 @@ void AuraEffect::HandleShapeshiftBoosts(Unit *target, bool apply) const {
 			case FORM_DIREBEAR:
 			case FORM_BEAR:
 				// Master Shapeshifter - Bear
-				if (AuraEffect const * aurEff = target->GetDummyAuraEffect(SPELLFAMILY_GENERIC, 2851, 0)) {
+				if (AuraEffect const * aurEff = target->GetAuraEffect(SPELL_AURA_MOD_HEALING_DONE_PERCENT, SPELLFAMILY_GENERIC, 2851, 0))  {
 					int32 bp = aurEff->GetAmount();
 					target->CastCustomSpell(target, 48418, &bp, NULL, NULL,
 							true);
@@ -3069,17 +3070,10 @@ void AuraEffect::HandleShapeshiftBoosts(Unit *target, bool apply) const {
 				break;
 			case FORM_MOONKIN:
 				// Master Shapeshifter - Moonkin
-				if (AuraEffect const * aurEff = target->GetDummyAuraEffect(SPELLFAMILY_GENERIC, 2851, 0)) {
+				if (AuraEffect const * aurEff = target->GetAuraEffect(SPELL_AURA_MOD_HEALING_DONE_PERCENT, SPELLFAMILY_GENERIC, 2851, 0))  {
+					if (target->HasAura(48418)) target->RemoveAurasDueToSpell(48418);
 					int32 bp = aurEff->GetAmount();
 					target->CastCustomSpell(target, 48421, &bp, NULL, NULL,
-							true);
-				}
-				break;
-				// Master Shapeshifter - Tree of Life
-			case FORM_TREE:
-				if (AuraEffect const * aurEff = target->GetDummyAuraEffect(SPELLFAMILY_GENERIC, 2851, 0)) {
-					int32 bp = aurEff->GetAmount();
-					target->CastCustomSpell(target, 48422, &bp, NULL, NULL,
 							true);
 				}
 				break;
@@ -6925,18 +6919,18 @@ void AuraEffect::HandleAuraDummy(AuraApplication const *aurApp, uint8 mode,
 			}
 			break;
 
-		case 87840: //Rune wild
-			if (target->GetTypeId() == TYPEID_PLAYER
-					&& target->HasAura(87840)) {
-				if (target->getLevel() >= 20 && target->getLevel() < 40)
-					target->ToPlayer()->SetSpeed(MOVE_RUN, 1.6f, true);
-				else if (target->getLevel() >= 40)
-					target->ToPlayer()->SetSpeed(MOVE_RUN, 2.0f, true);
-			} else
-				target->ToPlayer()->SetSpeed(MOVE_RUN, 1.0f, true);
-			target->ToPlayer()->setInWorgenForm(UNIT_FLAG2_WORGEN_TRANSFORM3);
-			target->GetAuraEffectsByType(SPELL_AURA_MOUNTED).front()->GetMiscValue();
-			break;
+        case 87840: //Rune wild
+            if (target->GetTypeId() == TYPEID_PLAYER
+                    && target->HasAura(87840)) {
+                if (target->HasSpell(33391)) // Journeyman Riding
+                    target->ToPlayer()->SetSpeed(MOVE_RUN, 2.0f, true);
+                else if (target->HasSpell(33388)) // Apprentice Riding
+                    target->ToPlayer()->SetSpeed(MOVE_RUN, 1.6f, true);
+            } else
+                target->ToPlayer()->SetSpeed(MOVE_RUN, 1.0f, true);
+            target->ToPlayer()->setInWorgenForm(UNIT_FLAG2_WORGEN_TRANSFORM3);
+            target->GetAuraEffectsByType(SPELL_AURA_MOUNTED).front()->GetMiscValue();
+            break;
 
 		case 62061: // Festive Holiday Mount
 			if (target->HasAuraType(SPELL_AURA_MOUNTED)) {

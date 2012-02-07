@@ -913,6 +913,11 @@ void Spell::SpellDamageSchoolDmg(SpellEffIndex effIndex)
 					if (m_caster->HasAura(78785)) // Blessing of the Grove rank 2
 					damage = int32(damage * 0.06f);
 				}
+				else if (m_spellInfo->Id == 77758) // Thrash
+				{
+					int32 dmg = urand(932, 1150);
+					damage = ((m_caster->GetTotalAttackPowerValue(BASE_ATTACK) * 0.0982) + dmg);
+				}
 				break;
 			}
 			case SPELLFAMILY_ROGUE:
@@ -1637,12 +1642,6 @@ void Spell::EffectDummy(SpellEffIndex effIndex)
 					m_caster->CastCustomSpell(unitTarget, 52752, &damage, NULL,
 							NULL, true);
 					return;
-				case 54171: //Divine Storm
-				{
-					m_caster->CastCustomSpell(unitTarget, 54172, &damage, 0, 0,
-							true);
-					return;
-				}
 				case 58418: // Portal to Orgrimmar
 				case 58420: // Portal to Stormwind
 					return; // implemented in EffectScript[0]
@@ -2124,15 +2123,15 @@ void Spell::EffectDummy(SpellEffIndex effIndex)
 		}
 		case SPELLFAMILY_PALADIN:
 		{
-			// Divine Storm
-			if (m_spellInfo->SpellFamilyFlags [1]
-					& SPELLFAMILYFLAG1_PALADIN_DIVINESTORM && effIndex == 1)
-			{
-				int32 dmg = CalculatePctN(m_damage, damage);
-				if (!unitTarget) unitTarget = m_caster;
-				m_caster->CastCustomSpell(unitTarget, 54171, &dmg, 0, 0, true);
-				return;
-			}
+            // Divine Storm
+            if (m_spellInfo->SpellFamilyFlags[1] & SPELLFAMILYFLAG1_PALADIN_DIVINESTORM && effIndex == 1)
+            {
+                int32 dmg = CalculatePctN(m_damage, damage);
+                if (!unitTarget)
+                    unitTarget = m_caster;
+                m_caster->CastCustomSpell(unitTarget, 54171, &dmg, 0, 0, true);
+                return;
+            }
 
 			switch (m_spellInfo->Id)
 			{
@@ -2261,23 +2260,28 @@ void Spell::EffectDummy(SpellEffIndex effIndex)
 						true, 0, 0, m_originalCasterGUID);
 				return;
 			}
-			// Lava Lash
-			if (m_spellInfo->SpellFamilyFlags [2]
-					& SPELLFAMILYFLAG2_SHAMAN_LAVA_LASH)
-			{
-				if (m_caster->GetTypeId() != TYPEID_PLAYER) return;
+            // Lava Lash
+            if (m_spellInfo->SpellFamilyFlags [2] & SPELLFAMILYFLAG2_SHAMAN_LAVA_LASH)
+            {
+                if (m_caster->GetTypeId() != TYPEID_PLAYER) return;
 
-				if (m_caster->ToPlayer()->GetItemByPos(INVENTORY_SLOT_BAG_0,
-						EQUIPMENT_SLOT_OFFHAND))
-				{
-					// Damage is increased by 25% if your off-hand weapon is enchanted with Flametongue.
-					if (m_caster->GetAuraEffect(SPELL_AURA_DUMMY,
-							SPELLFAMILY_SHAMAN, 0x200000, 0, 0)) m_damage +=
-							m_damage * damage / 100;
-				}
-				return;
-			}
-			break;
+                if (m_caster->ToPlayer()->GetItemByPos(INVENTORY_SLOT_BAG_0, EQUIPMENT_SLOT_OFFHAND))
+                {
+                    // Damage is increased by 40% if your off-hand weapon is enchanted with Flametongue.
+                    if (m_caster->GetAuraEffect(SPELL_AURA_DUMMY, SPELLFAMILY_SHAMAN, 0x200000, 0, 0)) 
+                        m_damage += m_damage * damage / 100;
+                }
+                
+                if (AuraEffect * aurEff = m_caster->GetDummyAuraEffect(SPELLFAMILY_SHAMAN, 4780, EFFECT_1)) 
+                    if (Aura * aur = unitTarget->GetAura(77661))
+                    {
+                        int32 pct = int32(aurEff->GetAmount() * aur->GetStackAmount());
+                        m_damage += CalculatePctN(m_damage, pct);
+                        unitTarget->RemoveAura(aur);
+                    }
+                return;
+            }
+            break;
 		case SPELLFAMILY_DEATHKNIGHT:
 			// Hungering Cold
 			if (m_spellInfo->SpellFamilyFlags [1]
@@ -7739,6 +7743,12 @@ void Spell::EffectLeapBack(SpellEffIndex effIndex)
 	{
 		//1891: Disengage
 		m_caster->JumpTo(speedxy, speedz, m_spellInfo->SpellIconID != 1891);
+		// Posthaste
+		if (AuraEffect *dummy = m_caster->GetAuraEffect(SPELL_AURA_DUMMY, SPELLFAMILY_HUNTER, 5094, 1))
+		{
+	int32 basepoints0 = dummy->GetAmount();
+				m_caster->CastCustomSpell(m_caster, 83559, &basepoints0, NULL, NULL, true);
+		}
 	}
 }
 

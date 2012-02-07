@@ -1052,6 +1052,15 @@ void Aura::HandleAuraSpecificMods(AuraApplication const* aurApp, Unit* caster, b
 					if (AuraEffect* auraEff = owner->GetDummyAuraEffect(SPELLFAMILY_HUNTER, 2234, 1))
 						GetEffect(0)->SetAmount(auraEff->GetAmount());
 			}
+            // Improved Serpent Sting
+            if (GetId() == 1978) 
+            {
+                if (AuraEffect const * aurEff = caster->GetDummyAuraEffect(SPELLFAMILY_HUNTER, 536, 0)) 
+                {
+                    int32 basepoints0 = aurEff->GetAmount() * GetEffect(0)->GetTotalTicks()	* caster->SpellDamageBonus(target, GetSpellProto(),	0, GetEffect(0)->GetAmount(), DOT) / 100;
+                    caster->CastCustomSpell(target, 83077, &basepoints0, NULL, NULL, true, NULL, GetEffect(0));
+                }
+            }
 			break;
 		case SPELLFAMILY_WARLOCK:
                 switch (GetId())
@@ -1693,43 +1702,44 @@ void Aura::HandleAuraSpecificMods(AuraApplication const* aurApp, Unit* caster, b
 			}
 
 			uint32 presence = GetId();
-			if (apply) {
+			if (apply)
+			{
 				// Blood Presence bonus
-				if (presence == 48266)
-					target->CastSpell(target, 63611, true);
-				else if (bloodPresenceAura) {
-					int32 basePoints1 = bloodPresenceAura->GetAmount();
-					target->CastCustomSpell(target, 63611, NULL, &basePoints1,
-							NULL, true, 0, bloodPresenceAura);
-				}
-				// Frost Presence bonus
 				if (presence == 48263)
 					target->CastSpell(target, 61261, true);
-				else if (frostPresenceAura) {
+				else if (bloodPresenceAura)
+				{
+					int32 basePoints1 = bloodPresenceAura->GetAmount();
+					target->CastCustomSpell(target, 61261, NULL, &basePoints1, NULL, true, 0, bloodPresenceAura);
+				}
+				// Frost Presence bonus
+				if (presence == 48266)
+					target->CastSpell(target, 63611, true);
+				else if (frostPresenceAura)
+				{
 					int32 basePoints0 = frostPresenceAura->GetAmount();
-					target->CastCustomSpell(target, 61261, &basePoints0, NULL,
-							NULL, true, 0, frostPresenceAura);
+					target->CastCustomSpell(target, 63611, &basePoints0, NULL, NULL, true, 0, frostPresenceAura);
 				}
 				// Unholy Presence bonus
-				if (presence == 48265) {
-					if (unholyPresenceAura) {
+				if (presence == 48265)
+				{
+					if (unholyPresenceAura)
+					{
 						// Not listed as any effect, only base points set
-						int32 basePoints0 =
-								SpellMgr::CalculateSpellEffectAmount(
-										unholyPresenceAura->GetSpellProto(), 1);
-						target->CastCustomSpell(target, 63622, &basePoints0,
-								&basePoints0, &basePoints0, true, 0,
-								unholyPresenceAura);
-						target->CastCustomSpell(target, 65095, &basePoints0,
-								NULL, NULL, true, 0, unholyPresenceAura);
+						int32 basePoints0 = SpellMgr::CalculateSpellEffectAmount(unholyPresenceAura->GetSpellProto(), 1);
+						target->CastCustomSpell(target, 63622, &basePoints0, &basePoints0, &basePoints0, true, 0, unholyPresenceAura);
+						target->CastCustomSpell(target, 65095, &basePoints0, NULL, NULL, true, 0, unholyPresenceAura);
 					}
 					target->CastSpell(target, 49772, true);
-				} else if (unholyPresenceAura) {
-					int32 basePoints0 = unholyPresenceAura->GetAmount();
-					target->CastCustomSpell(target, 49772, &basePoints0, NULL,
-							NULL, true, 0, unholyPresenceAura);
 				}
-			} else {
+				else if (unholyPresenceAura)
+				{
+					int32 basePoints0 = unholyPresenceAura->GetAmount();
+					target->CastCustomSpell(target, 49772, &basePoints0, NULL, NULL, true, 0, unholyPresenceAura);
+				}
+			}
+			else
+			{
 				// Remove passive auras
 				if (presence == 48266 || bloodPresenceAura)
 					target->RemoveAurasDueToSpell(63611);

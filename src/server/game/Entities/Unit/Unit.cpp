@@ -7151,8 +7151,34 @@ bool Unit::HandleDummyAuraProc(Unit *pVictim, uint32 damage,
 			}
 			break;
 		}
-		case SPELLFAMILY_HUNTER:
-		{
+        case SPELLFAMILY_HUNTER:
+        {
+            // Crouching Tiger, Hidden Chimera
+            if (dummySpell->SpellIconID == 4752)
+            {
+                if (!(dummySpell->procFlags == 0x000202A8)) return false;
+                if (ToPlayer()->HasSpellCooldown(dummySpell->Id)) return false;
+
+                if (procFlag & PROC_FLAG_TAKEN_MELEE_AUTO_ATTACK ||
+                    procFlag & PROC_FLAG_TAKEN_SPELL_MELEE_DMG_CLASS)
+                {
+                    uint32 seconds = dummySpell->EffectBasePoints [0];
+                    ToPlayer()->ReduceSpellCooldown(781, seconds);
+                    ToPlayer()->AddSpellCooldown(dummySpell->Id, 0, time(NULL) + 2);
+                    return true;
+                }
+
+                if (procFlag & PROC_FLAG_TAKEN_RANGED_AUTO_ATTACK || 
+                    procFlag & PROC_FLAG_TAKEN_SPELL_RANGED_DMG_CLASS || 
+                    procFlag & PROC_FLAG_TAKEN_SPELL_MAGIC_DMG_CLASS_NEG)
+                {
+                    uint32 seconds = dummySpell->EffectBasePoints [1];
+                    ToPlayer()->ReduceSpellCooldown(19263, seconds);
+                    ToPlayer()->AddSpellCooldown(dummySpell->Id, 0, time(NULL) + 2);
+                    return true;
+                }
+                return false;
+            }
 			// Thrill of the Hunt
 			if (dummySpell->SpellIconID == 2236)
 			{
@@ -8248,28 +8274,57 @@ bool Unit::HandleDummyAuraProc(Unit *pVictim, uint32 damage,
 
 				return true;
 			}
+            // Tidal Waves
+            if (dummySpell->SpellIconID == 3057)
+            {
+                if (!procSpell) return false;
+
+                int32 bp0 = -(dummySpell->EffectBasePoints[0]);
+                int32 bp1 = dummySpell->EffectBasePoints[0];
+                CastCustomSpell(this, 53390, &bp0, &bp1, NULL, true, 0, 0, GetGUID());
+                return true;
+            }
+            // Telluric Currents
+            if (dummySpell->SpellIconID == 320)
+            {
+                if (!procSpell) return false;
+
+                int32 pct = SpellMgr::CalculateSpellEffectAmount(dummySpell, EFFECT_0);
+                int32 bp0 = damage * pct / 100;
+
+                CastCustomSpell(pVictim, 82987, &bp0, NULL, NULL, true, 0, 0, GetGUID());
+                return true;
+            }
+            // Focused Insight
+            if (dummySpell->SpellIconID == 4674)
+            {
+                if (!procSpell) return false;
+
+                int32 manacost = (procSpell->ManaCostPercentage * GetCreateMana() / 100);
+                int32 mana = -(manacost * SpellMgr::CalculateSpellEffectAmount(dummySpell, EFFECT_0)) / 100;
+                int32 effect = SpellMgr::CalculateSpellEffectAmount(dummySpell, EFFECT_1);
+
+                CastCustomSpell(pVictim, 77800, &mana, &effect, &effect, true, 0, 0, GetGUID());
+                return true;
+            }
 			// Static Shock
-			if (dummySpell->SpellIconID == 3059)
-			{
-				// Lightning Shield
-				if (AuraEffect const * aurEff = GetAuraEffect(SPELL_AURA_PROC_TRIGGER_SPELL, SPELLFAMILY_SHAMAN, 0x400, 0, 0))
-				{
-					uint32 spell = sSpellMgr->GetSpellWithRank(26364,
-							sSpellMgr->GetSpellRank(aurEff->GetId()));
+            if (dummySpell->SpellIconID == 3059)
+            {
+                // Lightning Shield
+                if (AuraEffect const * aurEff = GetAuraEffect(SPELL_AURA_PROC_TRIGGER_SPELL, SPELLFAMILY_SHAMAN, 0x400, 0, 0))
+                {
+                    uint32 spell = sSpellMgr->GetSpellWithRank(26364, sSpellMgr->GetSpellRank(aurEff->GetId()));
 
-					// custom cooldown processing case
-					if (GetTypeId() == TYPEID_PLAYER
-							&& ToPlayer()->HasSpellCooldown(spell)) ToPlayer()->RemoveSpellCooldown(
-							spell);
+                    // custom cooldown processing case
+                    if (GetTypeId() == TYPEID_PLAYER && ToPlayer()->HasSpellCooldown(spell)) ToPlayer()->RemoveSpellCooldown(spell);
 
-					CastSpell(target, spell, true, castItem, triggeredByAura);
-					aurEff->GetBase()->DropCharge();
-					return true;
-				}
-				return false;
-			}
-			break;
-		}
+                    CastSpell(target, spell, true, castItem, triggeredByAura);
+                    return true;
+                }
+                return false;
+            }
+            break;
+        }
 		case SPELLFAMILY_DEATHKNIGHT:
 		{
 			// Blood-Caked Strike - Blood-Caked Blade
@@ -8312,14 +8367,8 @@ bool Unit::HandleDummyAuraProc(Unit *pVictim, uint32 damage,
 
 				if (pPet && pPet->getVictim() && damage && procSpell)
 				{
-					uint32 procDmg = damage / 2;
-					pPet->SendSpellNonMeleeDamageLog(pPet->getVictim(),
-							procSpell->Id, procDmg,
-							GetSpellSchoolMask(procSpell), 0, 0, false, 0,
-							false);
-					pPet->DealDamage(pPet->getVictim(), procDmg, NULL,
-							SPELL_DIRECT_DAMAGE, GetSpellSchoolMask(procSpell),
-							procSpell, true);
+					pPet->SendSpellNonMeleeDamageLog(pPet->getVictim(), procSpell->Id, damage, GetSpellSchoolMask(procSpell), 0, 0, false, 0, false); 
+                    pPet->DealDamage(pPet->getVictim(), damage, NULL, SPELL_DIRECT_DAMAGE, GetSpellSchoolMask(procSpell), procSpell, true); 
 					break;
 				}
 				else return false;
@@ -9275,14 +9324,23 @@ bool Unit::HandleProcTriggerSpell(Unit *pVictim, uint32 damage,
 					}
 					break;
 				}
-				if (auraSpellInfo->Id == 82661) // Aspect of the Fox: Focus bonus
-				{
-					if (!((auraSpellInfo->procFlags
-							& PROC_FLAG_TAKEN_MELEE_AUTO_ATTACK)
-							|| (auraSpellInfo->procFlags
-									& PROC_FLAG_TAKEN_SPELL_MELEE_DMG_CLASS))) return false;
+                if (auraSpellInfo->Id == 82661) // Aspect of the Fox: Focus bonus
+                {
+                    uint32 basepoints = 0;
+                    if (!((auraSpellInfo->procFlags
+                            & PROC_FLAG_TAKEN_MELEE_AUTO_ATTACK)
+                            || (auraSpellInfo->procFlags
+                                    & PROC_FLAG_TAKEN_SPELL_MELEE_DMG_CLASS))) return false;
+
+                    //One With Nature
+                    if (AuraEffect* aurEff = ToPlayer()->GetDummyAuraEffect(SPELLFAMILY_HUNTER, 5080, 1))
+                    {
+                        SpellEntry const* spellproto = aurEff->GetSpellProto();
+                        basepoints = spellproto->EffectBasePoints[1];
+                    }
+       
 					target = this;
-					basepoints0 = auraSpellInfo->EffectBasePoints [0];
+					basepoints0 = auraSpellInfo->EffectBasePoints [0] + basepoints;
 					trigger_spell_id = 82716;
 					break;
 				}
@@ -18575,6 +18633,15 @@ uint32 Unit::GetModelForForm(ShapeshiftForm form)
 					return 37728;
 				default: // RACE_TAUREN
 					return 20872;
+			}
+		case FORM_MOONKIN:
+			switch (getRace()) {
+			case RACE_TROLL:
+			case RACE_TAUREN:
+					return 15375;
+			case RACE_NIGHTELF:
+			case RACE_WORGEN:
+					return 15374;
 			}
 		case FORM_FLIGHT_EPIC:
 			switch (getRace())
