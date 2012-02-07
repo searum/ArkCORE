@@ -607,6 +607,7 @@ void AddSC_kezan();
 
 void AddSC_the_stonecore();					 //TheStonecore
 void AddSC_instance_the_stonecore();
+void AddSC_boss_corborus();
 void AddSC_instance_halls_of_origination();  //Halls of Origination
 void AddSC_boss_temple_guardian_anhuur();
 void AddSC_boss_ptah();
@@ -1285,6 +1286,7 @@ void AddNorthrendScripts() {
 	// Cataclysm Scripts
 	AddSC_the_stonecore();//The Stonecore
 	AddSC_instance_the_stonecore();
+	AddSC_boss_corborus();
     AddSC_instance_halls_of_origination();  //Halls of Origination
     AddSC_boss_temple_guardian_anhuur();
     AddSC_boss_ptah();
